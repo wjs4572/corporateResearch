@@ -1,0 +1,2 @@
+generateDocxCompanyReport.py 12:42:36 — Report saved to D:\co\github_personal\project_python\corporateResearch\out\company_report_Apple_Inc..docx
+generateDocxCompanyReport.py 12:44:11 — Report already exists: D:\co\github_personal\project_python\corporateResearch\out\company_report_Apple_Inc..docx. Skipping generation.
