@@ -21,8 +21,8 @@ template_path = os.path.join(os.path.dirname(__file__), "prompts", "corporateRep
 with open(template_path, "r", encoding="utf-8") as f:
     template_prompt = f.read()
 
-# Today's date in YYYY-MM-DD format
-today = datetime.datetime.now().strftime("%Y-%m-%d")
+# Format today's date in a natural language format that works well in the prompt
+today = datetime.datetime.now().strftime("%B %d, %Y")  # e.g., "August 30, 2025"
 
 for company in company_names:
     # Prepare substitutions
@@ -30,7 +30,7 @@ for company in company_names:
     # Build the command
     cmd = [
         "python",
-        "generateDocxCompanyReport.py",
+        "runOpenAIPromptForDocx.py",
         "--prompt", template_prompt,
         "--sub"
     ] + substitutions

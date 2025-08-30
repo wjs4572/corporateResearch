@@ -11,12 +11,17 @@ from dotenv import load_dotenv
 import datetime
 import inspect
 
-def log_to_file(message):
+def log_to_file(message, target_path=None):
     """
     Logs a message to a daily log file in the 'logs' directory, including filename and timestamp.
     Also prints the message to the console.
+    
+    Args:
+        message: The message to log
+        target_path: Optional base path for logs directory. If None, uses script directory.
     """
-    logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+    base_dir = target_path if target_path else os.path.dirname(__file__)
+    logs_dir = os.path.join(base_dir, "logs")
     os.makedirs(logs_dir, exist_ok=True)
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     log_file = os.path.join(logs_dir, f"report_log_{today}.txt")
@@ -32,14 +37,22 @@ def log_to_file(message):
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-def generate_docx_report(prompt, substitutions, model="gpt-3.5-turbo"):
+def generate_docx_report(prompt, substitutions, model="gpt-3.5-turbo", target_path=None):
     """
     Generates a DOCX report for a company using a prompt and substitution variables.
     - Substitutes <KEY> in the prompt with provided values.
     - Calls OpenAI API to generate report content.
     - Formats response with Markdown-style headings, bold, lists, and page breaks.
     - Saves the report and logs actions.
-    Returns the output file path or None on error.
+    
+    Args:
+        prompt: The template prompt to use
+        substitutions: Dictionary of key-value pairs for template substitution
+        model: OpenAI model to use (default: gpt-3.5-turbo)
+        target_path: Optional base path for output directory. If None, uses script directory.
+    
+    Returns:
+        The output file path or None on error.
     """
     try:
         # Substitute variables in the prompt (replace <KEY> with value)
@@ -47,7 +60,8 @@ def generate_docx_report(prompt, substitutions, model="gpt-3.5-turbo"):
             prompt = prompt.replace(f"<{key}>", value)
 
         # Prepare output folder and file path first
-        out_dir = os.path.join(os.path.dirname(__file__), "out")
+        base_dir = target_path if target_path else os.path.dirname(__file__)
+        out_dir = os.path.join(base_dir, "out")
         os.makedirs(out_dir, exist_ok=True)
         company_name = substitutions.get("CORPORATE_NAME", "company").replace(" ", "_").replace("/", "-")
         filename = f"company_report_{company_name}.docx"
@@ -58,6 +72,9 @@ def generate_docx_report(prompt, substitutions, model="gpt-3.5-turbo"):
             print(log_message)
             log_to_file(log_message)
             return out_path
+
+        # Log the final prompt after substitutions
+        log_to_file(f"Sending prompt to OpenAI (after substitutions):\n{prompt}\n")
 
         # Use new OpenAI API (v1.x)
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -137,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument('--prompt', type=str, required=True, help='Prompt/template to send to OpenAI (use <KEY> for substitutions)')
     parser.add_argument('--sub', nargs='*', help='Substitution key=value pairs')
     parser.add_argument('--model', type=str, default='gpt-3.5-turbo', help='OpenAI model to use')
+    parser.add_argument('--path', type=str, help='Base path for output and logs directories. Defaults to script directory.')
     args = parser.parse_args()
 
     substitutions = {}
@@ -146,5 +164,5 @@ if __name__ == "__main__":
                 key, value = pair.split('=', 1)
                 substitutions[key] = value
 
-    generate_docx_report(args.prompt, substitutions, model=args.model)
+    generate_docx_report(args.prompt, substitutions, model=args.model, target_path=args.path)
     
